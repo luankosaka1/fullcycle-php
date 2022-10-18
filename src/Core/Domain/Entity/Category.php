@@ -4,17 +4,23 @@ namespace Core\Domain\Entity;
 
 use Core\Domain\Entity\Traits\MethodsMagicsTrait;
 use Core\Domain\Exception\EntityValidationException;
+use Core\Domain\Validation\DomainValidation;
+use Core\Domain\ValueObject\Uuid;
+use DateTime;
 
 class Category
 {
     use MethodsMagicsTrait;
 
     public function __construct(
+        protected Uuid|string $id = '',
         protected string $name = '',
-        protected string $id = '',
         protected string $description = '',
         protected bool $isActive = true,
+        protected DateTime|string $createdAt = ''
     ) {   
+        $this->id = $this->id ? new Uuid($this->id) : Uuid::random();
+        $this->createdAt = $this->createdAt ? new DateTime($this->createdAt) : new DateTime();
         $this->validate();     
     }
 
@@ -39,22 +45,10 @@ class Category
 
     public function validate(): void
     {
-        if (empty($this->name)) {
-            throw new EntityValidationException("nome inválido");
-        }
+        DomainValidation::notNull($this->name);
+        DomainValidation::strMinLength($this->name, 3);
+        DomainValidation::strMaxLength($this->name, 255);
 
-        if (strlen($this->name) <= 2) {
-            throw new EntityValidationException("nome inválido");
-        }
-
-        if (
-            !empty($this->description) && 
-            (
-                strlen($this->description) < 2 || 
-                strlen($this->description) > 255
-            )
-        ) {
-            throw new EntityValidationException("description inválido");
-        }
+        DomainValidation::strCanNotNullAndMaxLength($this->description, 255);
     }
 }
